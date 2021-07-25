@@ -5,12 +5,14 @@ import com.rrtv.rpc.core.common.RpcResponse;
 import com.rrtv.rpc.core.protocol.MessageProtocol;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  *  数据响应处理器
  * @Author: changjiu.wang
  * @Date: 2021/7/25 15:09
  */
+@Slf4j
 public class RpcResponseHandler extends SimpleChannelInboundHandler<MessageProtocol<RpcResponse>> {
 
     @Override

@@ -34,10 +34,10 @@ public class ZookeeperDiscoveryService implements DiscoveryService {
 
     private ServiceDiscovery<ServiceInfo> serviceDiscovery;
 
-    @Autowired
     private LoadBalance loadBalance;
 
-    public ZookeeperDiscoveryService(String registryAddr) {
+    public ZookeeperDiscoveryService(String registryAddr, LoadBalance loadBalance) {
+        this.loadBalance = loadBalance;
         try {
             CuratorFramework client = CuratorFrameworkFactory.newClient(registryAddr, new ExponentialBackoffRetry(BASE_SLEEP_TIME_MS, MAX_RETRIES));
             client.start();

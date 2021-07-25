@@ -12,6 +12,7 @@ import com.rrtv.rpc.core.serialization.SerializationTypeEnum;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.Charset;
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.List;
  * @Author: changjiu.wang
  * @Date: 2021/7/24 22:28
  */
+@Slf4j
 public class RpcDecoder extends ByteToMessageDecoder {
 
     /**
@@ -40,6 +42,8 @@ public class RpcDecoder extends ByteToMessageDecoder {
      */
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+
+        log.info("---------decode------------------");
 
         if (in.readableBytes() < ProtocolConstants.HEADER_TOTAL_LEN) {
             return;

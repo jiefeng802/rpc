@@ -9,10 +9,12 @@ import com.rrtv.rpc.server.store.LocalServerCache;
 import com.rrtv.rpc.server.transport.RpcServer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.CommandLineRunner;
 
+import javax.annotation.PreDestroy;
 import java.net.InetAddress;
 
 /**
@@ -55,7 +57,7 @@ public class RpcServerProvider implements BeanPostProcessor, CommandLineRunner {
                 LocalServerCache.store(ServiceUtil.serviceKey(serviceName, version), bean);
 
                 ServiceInfo serviceInfo = new ServiceInfo();
-                serviceInfo.setServiceName(serviceName);
+                serviceInfo.setServiceName(ServiceUtil.serviceKey(serviceName, version));
                 serviceInfo.setPort(properties.getPort());
                 serviceInfo.setAddress(InetAddress.getLocalHost().getHostAddress());
                 serviceInfo.setAppName(properties.getAppName());
@@ -71,6 +73,7 @@ public class RpcServerProvider implements BeanPostProcessor, CommandLineRunner {
 
     /**
      * 启动rpc服务 处理请求
+     *
      * @param args
      */
     @Override
@@ -78,4 +81,5 @@ public class RpcServerProvider implements BeanPostProcessor, CommandLineRunner {
         new Thread(() -> rpcServer.start(properties.getPort())).start();
         log.info(" rpc server :{} start, appName :{} , port :{}", rpcServer, properties.getAppName(), properties.getPort());
     }
+
 }

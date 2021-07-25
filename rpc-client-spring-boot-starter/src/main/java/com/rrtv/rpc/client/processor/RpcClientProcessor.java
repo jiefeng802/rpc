@@ -1,7 +1,9 @@
 package com.rrtv.rpc.client.processor;
 
 import com.rrtv.rpc.client.annotation.RpcAutowired;
+import com.rrtv.rpc.client.config.RpcClientProperties;
 import com.rrtv.rpc.client.proxy.ClientStubProxyFactory;
+import com.rrtv.rpc.core.discovery.DiscoveryService;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
@@ -24,10 +26,16 @@ public class RpcClientProcessor implements BeanFactoryPostProcessor, Application
 
     private ClientStubProxyFactory clientStubProxyFactory;
 
+    private DiscoveryService discoveryService;
+
+    private RpcClientProperties properties;
+
     private ApplicationContext applicationContext;
 
-    public RpcClientProcessor(ClientStubProxyFactory clientStubProxyFactory) {
+    public RpcClientProcessor(ClientStubProxyFactory clientStubProxyFactory, DiscoveryService discoveryService, RpcClientProperties properties) {
         this.clientStubProxyFactory = clientStubProxyFactory;
+        this.discoveryService = discoveryService;
+        this.properties = properties;
     }
 
     @Override
@@ -43,7 +51,7 @@ public class RpcClientProcessor implements BeanFactoryPostProcessor, Application
                         Object bean = applicationContext.getBean(clazz);
                         field.setAccessible(true);
                         // 修改为代理对象
-                        ReflectionUtils.setField(field, bean, clientStubProxyFactory.getProxy(field.getType(), rpcAutowired.version()));
+                        ReflectionUtils.setField(field, bean, clientStubProxyFactory.getProxy(field.getType(), rpcAutowired.version(), discoveryService, properties));
                     }
                 });
             }

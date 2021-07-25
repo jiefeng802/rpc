@@ -9,7 +9,7 @@ import com.rrtv.rpc.server.annotation.RpcService;
  * @Date 2021/7/5 16:31
  * @Created by wangchangjiu
  */
-@RpcService(interfaceType = HelloWordService.class)
+@RpcService(interfaceType = HelloWordService.class, version = "1.0")
 public class HelloWordServiceImpl implements HelloWordService {
 
     @Override

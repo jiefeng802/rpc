@@ -47,7 +47,7 @@ public class ZookeeperRegistryService implements RegistryService {
     @Override
     public void register(ServiceInfo serviceInfo) throws Exception {
         ServiceInstance<ServiceInfo> serviceInstance = ServiceInstance.<ServiceInfo>builder()
-                .name(ServiceUtil.serviceKey(serviceInfo.getServiceName(), serviceInfo.getVersion()))
+                .name(serviceInfo.getServiceName())
                 .address(serviceInfo.getAddress())
                 .port(serviceInfo.getPort())
                 .payload(serviceInfo)

@@ -27,11 +27,10 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<MessageProtoc
 
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, MessageProtocol<RpcRequest> rpcRequestMessageProtocol) throws Exception {
-
         threadPoolExecutor.submit(() -> {
             MessageProtocol<RpcResponse> resProtocol = new MessageProtocol<>();
             RpcResponse response = new RpcResponse();
-            MessageHeader header = resProtocol.getHeader();
+            MessageHeader header = rpcRequestMessageProtocol.getHeader();
             header.setMsgType(MsgType.RESPONSE.getType());
             try {
                 Object result = handle(rpcRequestMessageProtocol.getBody());

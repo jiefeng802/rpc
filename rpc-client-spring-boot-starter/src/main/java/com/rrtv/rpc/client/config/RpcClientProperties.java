@@ -2,6 +2,7 @@ package com.rrtv.rpc.client.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
 /**
  * @Classname RpcClientProperties
@@ -10,7 +11,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @Created by wangchangjiu
  */
 @Data
-@ConfigurationProperties(prefix = "rpc.client")
 public class RpcClientProperties {
 
     /**

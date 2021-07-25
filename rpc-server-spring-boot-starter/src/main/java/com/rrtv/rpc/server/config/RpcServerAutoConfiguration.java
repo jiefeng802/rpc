@@ -3,7 +3,6 @@ package com.rrtv.rpc.server.config;
 import com.rrtv.rpc.core.register.RegistryService;
 import com.rrtv.rpc.core.register.ZookeeperRegistryService;
 import com.rrtv.rpc.server.RpcServerProvider;
-import com.rrtv.rpc.server.transport.BioRpcServer;
 import com.rrtv.rpc.server.transport.NettyRpcServer;
 import com.rrtv.rpc.server.transport.RpcServer;
 import org.springframework.beans.factory.annotation.Autowired;
