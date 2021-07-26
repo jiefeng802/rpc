@@ -1,4 +1,4 @@
-package com.rrtv.rpc.core.common;
+package com.rrtv.rpc.core.exception;
 
 public class RpcException extends RuntimeException {
 

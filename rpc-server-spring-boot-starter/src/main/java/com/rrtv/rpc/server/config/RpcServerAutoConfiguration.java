@@ -38,7 +38,9 @@ public class RpcServerAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(RpcServerProvider.class)
-    RpcServerProvider rpcServerProvider(){
-        return new RpcServerProvider();
+    RpcServerProvider rpcServerProvider(@Autowired RegistryService registryService,
+                                        @Autowired RpcServer rpcServer,
+                                        @Autowired RpcServerProperties rpcServerProperties){
+        return new RpcServerProvider(registryService, rpcServer, rpcServerProperties);
     }
 }

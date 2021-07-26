@@ -27,6 +27,7 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<MessageProtoc
 
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, MessageProtocol<RpcRequest> rpcRequestMessageProtocol) throws Exception {
+        // 多线程处理每个请求
         threadPoolExecutor.submit(() -> {
             MessageProtocol<RpcResponse> resProtocol = new MessageProtocol<>();
             RpcResponse response = new RpcResponse();

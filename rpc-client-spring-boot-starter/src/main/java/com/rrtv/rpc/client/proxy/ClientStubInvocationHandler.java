@@ -4,11 +4,12 @@ import com.rrtv.rpc.client.config.RpcClientProperties;
 import com.rrtv.rpc.client.transport.NetClientTransportFactory;
 import com.rrtv.rpc.core.common.*;
 import com.rrtv.rpc.core.discovery.DiscoveryService;
+import com.rrtv.rpc.core.exception.ResourceNotFoundException;
+import com.rrtv.rpc.core.exception.RpcException;
 import com.rrtv.rpc.core.protocol.MessageHeader;
 import com.rrtv.rpc.core.protocol.MessageProtocol;
 import com.rrtv.rpc.core.protocol.MsgStatus;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -40,6 +41,10 @@ public class ClientStubInvocationHandler implements InvocationHandler {
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         // 1、获得服务信息
         ServiceInfo serviceInfo = discoveryService.discovery(ServiceUtil.serviceKey(this.calzz.getName(), this.version));
+        if(serviceInfo == null) {
+            throw new ResourceNotFoundException("404");
+        }
+
         MessageProtocol<RpcRequest> messageProtocol = new MessageProtocol<>();
         // 设置请求头
         messageProtocol.setHeader(MessageHeader.build(properties.getSerialization()));

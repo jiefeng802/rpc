@@ -18,6 +18,7 @@ public class RpcResponseHandler extends SimpleChannelInboundHandler<MessageProto
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, MessageProtocol<RpcResponse> rpcResponseMessageProtocol) throws Exception {
         String requestId = rpcResponseMessageProtocol.getHeader().getRequestId();
+        // 收到响应 设置响应数据
         LocalRpcResponseCache.fillResponse(requestId, rpcResponseMessageProtocol);
     }
 }

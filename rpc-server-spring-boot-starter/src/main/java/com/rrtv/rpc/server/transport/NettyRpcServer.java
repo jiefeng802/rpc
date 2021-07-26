@@ -21,6 +21,7 @@ import java.net.InetAddress;
  */
 @Slf4j
 public class NettyRpcServer implements RpcServer {
+
     @Override
     public void start(int port) {
         EventLoopGroup boss = new NioEventLoopGroup();
@@ -28,7 +29,6 @@ public class NettyRpcServer implements RpcServer {
 
         try {
             String serverAddress = InetAddress.getLocalHost().getHostAddress();
-
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(boss, worker)
                     .channel(NioServerSocketChannel.class)
@@ -40,6 +40,7 @@ public class NettyRpcServer implements RpcServer {
                                     .addLast(new RpcEncoder())
                                     // 协议解码
                                     .addLast(new RpcDecoder())
+                                    // 请求处理器
                                     .addLast(new RpcRequestHandler());
                         }
                     })

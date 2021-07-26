@@ -26,14 +26,17 @@ import java.net.InetAddress;
 @Slf4j
 public class RpcServerProvider implements BeanPostProcessor, CommandLineRunner {
 
-    @Autowired
     private RegistryService registryService;
 
-    @Autowired
     private RpcServerProperties properties;
 
-    @Autowired
     private RpcServer rpcServer;
+
+    public RpcServerProvider(RegistryService registryService, RpcServer rpcServer, RpcServerProperties properties) {
+        this.registryService = registryService;
+        this.properties = properties;
+        this.rpcServer = rpcServer;
+    }
 
     /**
      * 所有bean 实例化之后处理
