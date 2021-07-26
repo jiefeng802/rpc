@@ -27,11 +27,11 @@ RPC 框架包含三个最重要的组件，分别是客户端、服务端和注�
 
 ## 如何使用？
 由上面的模块依赖可以知道RPC框架主要是就是以rpc开头的这几个模块，在使用的时候
-1.消费者（consumer）需要依赖rpc-client-spring-boot-starter，
-2.服务提供者需要依赖rpc-server-spring-boot-starter。
+- 1.消费者（consumer）需要依赖 `rpc-client-spring-boot-starter`。
+- 2.服务提供者需要依赖 `rpc-server-spring-boot-starter`。
 这样基本就可以了，因为使用了spring boot自动配置，所以消费者和提供者启动的时候都会去加载starter里的spring.factories文件，会自动将需要的bean自动装配到IOC容器中。
-3.注册中心使用ZK
-4.消费者和服务提供者需要配置注册中心的地址（默认127.0.0.1:2181）以及服务启动端口，服务提供者还需要配置RPC监听端口。
+- 3.注册中心使用ZK
+- 4.消费者和服务提供者需要配置注册中心的地址（默认127.0.0.1:2181）以及服务启动端口，服务提供者还需要配置RPC监听端口。
 
 ## 发布服务和消费服务
 - 对于发布的服务需要使用 @RpcService 注解标识，复合注解，基于 @Service
@@ -54,7 +54,46 @@ public class HelloWordServiceImpl implements HelloWordService {
 ```
 
 ## 本项目实现哪些组件
-1.动态代理，基于jdk接口的动态代理，客户端不能切换（rpc-client-spring-boot-starter模块 proxy 包）
+1.动态代理，基于jdk接口的动态代理，客户端不能切换（`rpc-client-spring-boot-starter`模块 proxy 包）
   - 原理是服务消费者启动的时候有个 `RpcClientProcessor` bean 的后置处理器，会扫描ioc容器中的bean,如果这个bean有属性被@RpcAutowired修饰，就给属性动态赋代理对象。
  
-2.服务注册发现，本项目使用ZK做的，实现在 rpc-core 模块，
+2.服务注册发现，本项目使用ZK做的，实现在 `rpc-core` 模块，discovery 包下面是服务发现，register 包下面是服务注册。  
+服务提供者启动后，RpcServerProvider 会获取到被 @RpcService 修饰的bean，将服务元数据注册到zk上。  
+
+
+3.负载均衡策略，定义在`rpc-core`中，目前支持轮询（FullRoundBalance）和随机（RandomBalance），默认使用随机策略。由`rpc-client-spring-boot-starter`指定。
+```
+ @Primary
+ @Bean(name = "loadBalance")
+ @ConditionalOnMissingBean
+ @ConditionalOnProperty(prefix = "rpc.client", name = "balance", havingValue = "randomBalance", matchIfMissing = true)
+ public LoadBalance randomBalance() {
+     return new RandomBalance();
+ }
+
+ @Bean(name = "loadBalance")
+ @ConditionalOnMissingBean
+ @ConditionalOnProperty(prefix = "rpc.client", name = "balance", havingValue = "fullRoundBalance")
+ public LoadBalance loadBalance() {
+     return new FullRoundBalance();
+ } 
+```
+可以在消费者中配置 `rpc.client.balance=fullRoundBalance` 替换，也可以自己定义，通过实现接口 `LoadBalance`，并将创建的类加入IOC容器即可。
+```
+@Slf4j
+@Component
+public class FirstLoadBalance implements LoadBalance {
+
+    @Override
+    public ServiceInfo chooseOne(List<ServiceInfo> services) {
+        log.info("---------FirstLoadBalance-----------------");
+        return services.get(0);
+    }
+}
+```
+
+4.自定义消息协议、编解码。
+
+5.序列化和反序列化
+
+6.网络传输，使用netty
