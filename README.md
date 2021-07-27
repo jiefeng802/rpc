@@ -2,7 +2,7 @@
 
 ## 基本结构
 
-![RPC项目架构](../ziliao/img/rpc.jpg)
+![RPC项目架构](ziliao/img/rpc.jpg)
 
 RPC 框架包含三个最重要的组件，分别是客户端、服务端和注册中心。在一次 RPC 调用流程中，这三个组件是这样交互的：
 
@@ -15,7 +15,7 @@ RPC 框架包含三个最重要的组件，分别是客户端、服务端和注�
 
 ## 模块依赖
 
-使用maven聚合工程
+### 使用maven聚合工程
 
 - rpc           父工程 
 - consumer，服务消费者，是rpc的子工程，依赖于rpc-client-spring-boot-starter。
@@ -24,6 +24,9 @@ RPC 框架包含三个最重要的组件，分别是客户端、服务端和注�
 - rpc-client-spring-boot-starter，rpc客户端starter，封装客户端发起的请求过程（动态代理、网络通信）。
 - rpc-core，RPC核心依赖，负载均衡策略、消息协议、协议编解码、序列化、请求响应实体、服务注册发现。
 - rpc-server-spring-boot-starter，rpc服务端starter，负责发布 RPC 服务，接收和处理 RPC 请求，反射调用服务端。
+
+### 依赖图
+![模块依赖](ziliao/img/module_dependency.png)
 
 ## 如何使用？
 由上面的模块依赖可以知道RPC框架主要是就是以rpc开头的这几个模块，在使用的时候
@@ -157,3 +160,19 @@ public class FirstLoadBalance implements LoadBalance {
 ```
 
 6.网络传输，使用netty
+
+
+## 环境搭建
+
+- 操作系统：Windows
+- 集成开发工具：IntelliJ IDEA
+- 项目技术栈：SpringBoot 2.5.2 + JDK 1.8 + Netty 4.1.42.Final
+- 项目依赖管理工具：Maven 4.0.0
+- 注册中心：Zookeeeper 3.7.0
+
+## 项目测试
+
+- 启动 Zookeeper 服务器：bin/zkServer.cmd
+- 启动 provider 模块 ProviderApplication
+- 启动 consumer 模块 ConsumerApplication
+- 测试：浏览器输入 http://localhost:9090/hello/world?name=hello，成功返回 您好：hello, rpc 调用成功
