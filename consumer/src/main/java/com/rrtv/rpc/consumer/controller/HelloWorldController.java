@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 public class HelloWorldController {
 
-    @RpcAutowired(version = "1.1")
+    @RpcAutowired(version = "1.0")
     private HelloWordService helloWordService;
 
     @GetMapping("/hello/world")

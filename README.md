@@ -128,13 +128,41 @@ public class FirstLoadBalance implements LoadBalance {
 #### 4.2 编解码
 编解码实现在 `rpc-core` 模块，在包 `com.rrtv.rpc.core.codec`下。
 
-4.2.1 如何实现编解码？  
+##### 4.2.1 如何实现编解码？  
 编码利用 netty 的 MessageToByteEncoder 类实现。实现 encode 方法，MessageToByteEncoder 继承 ChannelOutboundHandlerAdapter 。  
 编码就是将请求数据写入到 ByteBuf 中。
 
 解码是利用 netty 的 ByteToMessageDecoder 类实现。 实现 decode 方法，ByteToMessageDecoder 继承 ChannelInboundHandlerAdapter。  
 解码就是将 ByteBuf 中数据解析出请求的数据。  
 解码要注意 TCP 粘包和拆包问题
+
+##### 4.2.2 什么是TCP粘包和拆包问题？  
+TCP 传输协议是面向流的，没有数据包界限。客户端向服务端发送数据时，可能将一个完整的报文拆分成多个小报文进行发送，也可能将多个报文合并成一个大的报文进行发送。  
+因此就有了拆包和粘包。
+在网络通信的过程中，每次可以发送的数据包大小是受多种因素限制的，如 MTU 传输单元大小、滑动窗口等。  
+所以如果一次传输的网络包数据大小超过传输单元大小，那么我们的数据可能会拆分为多个数据包发送出去。
+如果每次请求的网络包数据都很小，比如一共请求了 10000 次，TCP 并不会分别发送 10000 次。 TCP采用的 Nagle（批量发送，主要用于解决频繁发送小数据包而带来的网络拥塞问题） 算法对此作出了优化。
+
+所以，网络传输会出现这样：  
+![模块依赖](ziliao/img/tcp_package.png)  
+1.服务端恰巧读到了两个完整的数据包 A 和 B，没有出现拆包/粘包问题；  
+2.服务端接收到 A 和 B 粘在一起的数据包，服务端需要解析出 A 和 B；  
+3.服务端收到完整的 A 和 B 的一部分数据包 B-1，服务端需要解析出完整的 A，并等待读取完整的 B 数据包；   
+4.服务端接收到 A 的一部分数据包 A-1，此时需要等待接收到完整的 A 数据包；  
+5.数据包 A 较大，服务端需要多次才可以接收完数据包 A。  
+
+##### 4.2.3 如何解决？
+- 消息长度固定  
+    每个数据报文都需要一个固定的长度。当接收方累计读取到固定长度的报文后，就认为已经获得一个完整的消息。当发送方的数据小于固定长度时，则需要空位补齐。  
+    消息定长法使用非常简单，但是缺点也非常明显，无法很好设定固定长度的值，如果长度太大会造成字节浪费，长度太小又会影响消息传输，所以在一般情况下消息定长法不会被采用。
+- 特定分隔符  
+    在每次发送报文的尾部加上特定分隔符，接收方就可以根据特殊分隔符进行消息拆分。
+    分隔符的选择一定要避免和消息体中字符相同，以免冲突。否则可能出现错误的消息拆分。比较推荐的做法是将消息进行编码，例如 base64 编码，然后可以选择 64 个编码字符之外的字符作为特定分隔符
+- 消息长度 + 消息内容  
+    消息长度 + 消息内容是项目开发中最常用的一种协议，接收方根据消息长度来读取消息内容。    
+
+##### 本项目如何解决的？
+使用的是 消息长度 + 消息内容 的形式。在解码器 RpcDecoder 中读取固定长度数据。
 
 5.序列化和反序列化  
 序列化和反序列化在 `rpc-core` 模块 `com.rrtv.rpc.core.serialization` 包下，提供了 `HessianSerialization` 和 `JsonSerialization` 序列化。  
@@ -161,6 +189,34 @@ public class FirstLoadBalance implements LoadBalance {
 
 6.网络传输，使用netty
 
+## 流程
+服务提供者启动  
+  1. 服务提供者 provider 会依赖 rpc-server-spring-boot-starter  
+  2. ProviderApplication 启动，根据springboot 自动装配机制，RpcServerAutoConfiguration 自动配置生效  
+  3. RpcServerProvider 是一个bean后置处理器，会发布服务，将服务元数据注册到ZK上  
+  4. RpcServerProvider.run 方法会开启一个 netty 服务  
+  
+服务消费者启动  
+  1.服务消费者 consumer 会依赖 rpc-client-spring-boot-starter  
+  2.ConsumerApplication 启动，根据springboot 自动装配机制，RpcClientAutoConfiguration 自动配置生效    
+  3.将服务发现、负载均衡、代理等bean加入IOC容器  
+  4.后置处理器 RpcClientProcessor 会扫描 bean ,将被 @RpcAutowired 修饰的属性动态赋值为代理对象  
+  
+调用过程  
+  1. 服务消费者 发起请求 http://localhost:9090/hello/world?name=hello  
+  2. 服务消费者 调用 helloWordService.sayHello() 方法，会被代理到执行 ClientStubInvocationHandler.invoke() 方法  
+  3. 服务消费者 通过ZK服务发现获取服务元数据，找不到报错404  
+  4. 服务消费者 自定义协议，封装请求头和请求体  
+  5. 服务消费者 通过自定义编码器 RpcEncoder 将消息编码  
+  6. 服务消费者 通过 服务发现获取到服务提供者的ip和端口， 通过Netty网络传输层发起调用  
+  7. 服务消费者 通过 RpcFuture 进入返回结果（超时）等待
+  8. 服务提供者 收到消费者请求
+  9. 服务提供者 将消息通过自定义解码器 RpcDecoder 解码
+  10.服务提供者 解码之后的数据发送到 RpcRequestHandler 中进行处理，通过反射调用执行服务端本地方法并获取结果
+  11.服务提供者 将执行的结果通过 编码器 RpcEncoder 将消息编码。（由于请求和响应的协议是一样，所以编码器和解码器可以用一套）  
+  13.服务消费者 将消息通过自定义解码器 RpcDecoder 解码
+  14.服务消费者 通过RpcResponseHandler将消息写入 请求和响应 池中，并设置 RpcFuture 的响应结果
+  15.服务消费者 获取到结果 
 
 ## 环境搭建
 

@@ -14,7 +14,7 @@ import java.util.List;
  * @Date: 2021/7/26 18:55
  */
 @Slf4j
-@Component
+//@Component
 public class FirstLoadBalance implements LoadBalance {
 
     @Override
