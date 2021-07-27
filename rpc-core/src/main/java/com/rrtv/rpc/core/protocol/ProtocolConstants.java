@@ -12,6 +12,6 @@ public class ProtocolConstants {
 
     public static final byte VERSION = 0x1;
 
-    public static final int reqLen = 32;
+    public static final int REQ_LEN = 32;
 
 }

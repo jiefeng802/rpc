@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
-@Component
 public class HessianSerialization implements RpcSerialization {
 
     /**

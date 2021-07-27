@@ -18,6 +18,7 @@ import java.nio.charset.Charset;
 import java.util.List;
 
 /**
+ *  解码器
  * @Author: changjiu.wang
  * @Date: 2021/7/24 22:28
  */
@@ -34,7 +35,7 @@ public class RpcDecoder extends ByteToMessageDecoder {
      *  |                   数据内容 （长度不定）                         |
      *  +---------------------------------------------------------------+
      *
-     *
+     *  decode 这个方法会被循环调用
      * @param ctx
      * @param in
      * @param out
@@ -43,13 +44,14 @@ public class RpcDecoder extends ByteToMessageDecoder {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
 
-        log.info("---------decode------------------");
-
         if (in.readableBytes() < ProtocolConstants.HEADER_TOTAL_LEN) {
+            // 可读的数据小于请求头总的大小 直接丢弃
             return;
         }
+        // 标记 ByteBuf 读指针位置
         in.markReaderIndex();
 
+        // 魔数
         short magic = in.readShort();
         if (magic != ProtocolConstants.MAGIC) {
             throw new IllegalArgumentException("magic number is illegal, " + magic);
@@ -59,10 +61,11 @@ public class RpcDecoder extends ByteToMessageDecoder {
         byte serializeType = in.readByte();
         byte msgType = in.readByte();
         byte status = in.readByte();
-        CharSequence requestId = in.readCharSequence(ProtocolConstants.reqLen, Charset.forName("UTF-8"));
+        CharSequence requestId = in.readCharSequence(ProtocolConstants.REQ_LEN, Charset.forName("UTF-8"));
 
         int dataLength = in.readInt();
         if (in.readableBytes() < dataLength) {
+            // 可读的数据长度小于 请求体长度 直接丢弃并重置 读指针位置
             in.resetReaderIndex();
             return;
         }

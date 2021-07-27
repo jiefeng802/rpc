@@ -43,7 +43,6 @@ public class HelloWordServiceImpl implements HelloWordService {
     public String sayHello(String name) {
         return String.format("您好：%s, rpc 调用成功", name);
     }
-
 }
 ```
 
@@ -54,14 +53,16 @@ public class HelloWordServiceImpl implements HelloWordService {
 ```
 
 ## 本项目实现哪些组件
-1.动态代理，基于jdk接口的动态代理，客户端不能切换（`rpc-client-spring-boot-starter`模块 proxy 包）
-  - 原理是服务消费者启动的时候有个 `RpcClientProcessor` bean 的后置处理器，会扫描ioc容器中的bean,如果这个bean有属性被@RpcAutowired修饰，就给属性动态赋代理对象。
+### 1.动态代理
+  基于jdk接口的动态代理，客户端不能切换（`rpc-client-spring-boot-starter`模块 proxy 包）  
+  原理是服务消费者启动的时候有个 `RpcClientProcessor` bean 的后置处理器，会扫描ioc容器中的bean,如果这个bean有属性被@RpcAutowired修饰，就给属性动态赋代理对象。
  
-2.服务注册发现，本项目使用ZK做的，实现在 `rpc-core` 模块，discovery 包下面是服务发现，register 包下面是服务注册。  
-服务提供者启动后，RpcServerProvider 会获取到被 @RpcService 修饰的bean，将服务元数据注册到zk上。  
+### 2.服务注册发现
+本项目使用ZK做的，实现在 `rpc-core` 模块，`com.rrtv.rpc.core.discovery` 包下面是服务发现，`com.rrtv.rpc.core.register` 包下面是服务注册。  
+服务提供者启动后，`RpcServerProvider` 会获取到被 @RpcService 修饰的bean，将服务元数据注册到zk上。  
 
-
-3.负载均衡策略，定义在`rpc-core`中，目前支持轮询（FullRoundBalance）和随机（RandomBalance），默认使用随机策略。由`rpc-client-spring-boot-starter`指定。
+### 3.负载均衡策略
+负载均衡定义在`rpc-core`中，目前支持轮询（FullRoundBalance）和随机（RandomBalance），默认使用随机策略。由`rpc-client-spring-boot-starter`指定。
 ```
  @Primary
  @Bean(name = "loadBalance")
@@ -92,8 +93,67 @@ public class FirstLoadBalance implements LoadBalance {
 }
 ```
 
-4.自定义消息协议、编解码。
+### 4.自定义消息协议、编解码。  
+所谓协议，就是通信双方事先商量好规则，服务端知道发送过来的数据将如何解析。  
 
-5.序列化和反序列化
+#### 4.1自定义消息协议  
++---------------------------------------------------------------+  
+| 魔数 2byte | 协议版本号 1byte | 序列化算法 1byte | 报文类型 1byte|  
++---------------------------------------------------------------+  
+| 状态 1byte |        消息 ID 8byte     |      数据长度 4byte     |  
++---------------------------------------------------------------+  
+|                   数据内容 （长度不定）                         |  
++---------------------------------------------------------------+  
+
+ - 魔数：魔数是通信双方协商的一个暗号，通常采用固定的几个字节表示。魔数的作用是防止任何人随便向服务器的端口上发送数据。
+        例如 java Class 文件开头就存储了魔数 0xCAFEBABE，在加载 Class 文件时首先会验证魔数的正确性
+
+ - 协议版本号：随着业务需求的变化，协议可能需要对结构或字段进行改动，不同版本的协议对应的解析方法也是不同的。
+ 
+ - 序列化算法：序列化算法字段表示数据发送方应该采用何种方法将请求的对象转化为二进制，以及如何再将二进制转化为对象，如 JSON、Hessian、Java 自带序列化等。
+ 
+ - 报文类型： 在不同的业务场景中，报文可能存在不同的类型。RPC 框架中有请求、响应、心跳等类型的报文。
+ 
+ - 状态： 状态字段用于标识请求是否正常（SUCCESS、FAIL）。
+ 
+ - 消息ID： 请求唯一ID，通过这个请求ID将响应关联起来。
+ 
+ - 数据长度： 标明数据的长度，用于判断是否是一个完整的数据包
+ 
+ - 数据内容： 请求体内容
+ 
+#### 4.2 编解码
+编解码实现在 `rpc-core` 模块，在包 `com.rrtv.rpc.core.codec`下。
+
+4.2.1 如何实现编解码？  
+编码利用 netty 的 MessageToByteEncoder 类实现。实现 encode 方法，MessageToByteEncoder 继承 ChannelOutboundHandlerAdapter 。  
+编码就是将请求数据写入到 ByteBuf 中。
+
+解码是利用 netty 的 ByteToMessageDecoder 类实现。 实现 decode 方法，ByteToMessageDecoder 继承 ChannelInboundHandlerAdapter。  
+解码就是将 ByteBuf 中数据解析出请求的数据。  
+解码要注意 TCP 粘包和拆包问题
+
+5.序列化和反序列化  
+序列化和反序列化在 `rpc-core` 模块 `com.rrtv.rpc.core.serialization` 包下，提供了 `HessianSerialization` 和 `JsonSerialization` 序列化。  
+默认使用 `HessianSerialization` 序列化。
+```
+  public static SerializationTypeEnum parseByName(String typeName) {
+        for (SerializationTypeEnum typeEnum : SerializationTypeEnum.values()) {
+            if (typeEnum.name().equalsIgnoreCase(typeName)) {
+                return typeEnum;
+            }
+        }
+        return HESSIAN;
+    }
+
+    public static SerializationTypeEnum parseByType(byte type) {
+        for (SerializationTypeEnum typeEnum : SerializationTypeEnum.values()) {
+            if (typeEnum.getType() == type) {
+                return typeEnum;
+            }
+        }
+        return HESSIAN;
+    }
+```
 
 6.网络传输，使用netty
