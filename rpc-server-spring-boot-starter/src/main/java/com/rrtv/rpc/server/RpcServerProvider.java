@@ -38,6 +38,7 @@ public class RpcServerProvider implements BeanPostProcessor, CommandLineRunner {
         this.rpcServer = rpcServer;
     }
 
+
     /**
      * 所有bean 实例化之后处理
      * <p>
@@ -83,6 +84,15 @@ public class RpcServerProvider implements BeanPostProcessor, CommandLineRunner {
     public void run(String... args) {
         new Thread(() -> rpcServer.start(properties.getPort())).start();
         log.info(" rpc server :{} start, appName :{} , port :{}", rpcServer, properties.getAppName(), properties.getPort());
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                // 关闭之后把服务从ZK上清楚
+                registryService.destroy();
+            }catch (Exception ex){
+                log.error("", ex);
+            }
+
+        }));
     }
 
 }
