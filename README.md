@@ -166,7 +166,7 @@ TCP 传输协议是面向流的，没有数据包界限。客户端向服务端�
 
 5.序列化和反序列化  
 序列化和反序列化在 `rpc-core` 模块 `com.rrtv.rpc.core.serialization` 包下，提供了 `HessianSerialization` 和 `JsonSerialization` 序列化。  
-默认使用 `HessianSerialization` 序列化。
+默认使用 `HessianSerialization` 序列化。用户不可以自定义。
 ```
   public static SerializationTypeEnum parseByName(String typeName) {
         for (SerializationTypeEnum typeEnum : SerializationTypeEnum.values()) {
@@ -187,7 +187,24 @@ TCP 传输协议是面向流的，没有数据包界限。客户端向服务端�
     }
 ```
 
-6.网络传输，使用netty
+6.网络传输，使用netty  
+netty 代码固定的，值得注意的是 handler 的顺序不能弄错，编码是出站操作（可以放在入站后面），解码和收到响应都是入站操作，解码要在前面。
+```
+bootstrap.group(eventLoopGroup).channel(NioSocketChannel.class)
+.handler(new ChannelInitializer<SocketChannel>() {
+    @Override
+    protected void initChannel(SocketChannel socketChannel) throws Exception {
+        socketChannel.pipeline()
+            // 编码 是出站操作 将消息编写二进制
+            .addLast(new RpcEncoder<>())
+            // 解码 是入站操作 将二进制解码成消息
+            .addLast(new RpcDecoder())
+            // 接收响应 入站操作
+            .addLast(handler);
+    }
+});
+```
+
 
 ## 流程
 服务提供者启动  
@@ -211,12 +228,12 @@ TCP 传输协议是面向流的，没有数据包界限。客户端向服务端�
   6. 服务消费者 通过 服务发现获取到服务提供者的ip和端口， 通过Netty网络传输层发起调用  
   7. 服务消费者 通过 RpcFuture 进入返回结果（超时）等待
   8. 服务提供者 收到消费者请求
-  9. 服务提供者 将消息通过自定义解码器 RpcDecoder 解码
-  10.服务提供者 解码之后的数据发送到 RpcRequestHandler 中进行处理，通过反射调用执行服务端本地方法并获取结果
-  11.服务提供者 将执行的结果通过 编码器 RpcEncoder 将消息编码。（由于请求和响应的协议是一样，所以编码器和解码器可以用一套）  
-  13.服务消费者 将消息通过自定义解码器 RpcDecoder 解码
-  14.服务消费者 通过RpcResponseHandler将消息写入 请求和响应 池中，并设置 RpcFuture 的响应结果
-  15.服务消费者 获取到结果 
+  9. 服务提供者 将消息通过自定义解码器 RpcDecoder 解码  
+  10. 服务提供者 解码之后的数据发送到 RpcRequestHandler 中进行处理，通过反射调用执行服务端本地方法并获取结果
+  11. 服务提供者 将执行的结果通过 编码器 RpcEncoder 将消息编码。（由于请求和响应的协议是一样，所以编码器和解码器可以用一套）  
+  13. 服务消费者 将消息通过自定义解码器 RpcDecoder 解码
+  14. 服务消费者 通过RpcResponseHandler将消息写入 请求和响应 池中，并设置 RpcFuture 的响应结果
+  15. 服务消费者 获取到结果 
 
 ## 环境搭建
 

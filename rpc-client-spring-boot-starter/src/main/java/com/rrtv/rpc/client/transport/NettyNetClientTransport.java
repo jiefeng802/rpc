@@ -41,9 +41,13 @@ public class NettyNetClientTransport implements NetClientTransport {
                     @Override
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
                         socketChannel.pipeline()
-                                .addLast(new RpcEncoder<>())
+
+                                // 解码 是入站操作 将二进制解码成消息
                                 .addLast(new RpcDecoder())
-                                .addLast(handler);
+                                // 接收响应 入站操作
+                                .addLast(handler)
+                                // 编码 是出站操作 将消息编写二进制
+                                .addLast(new RpcEncoder<>());
                     }
                 });
     }
