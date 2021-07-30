@@ -28,4 +28,9 @@ public class RpcClientProperties {
      */
     private String discoveryAddr = "127.0.0.1:2181";
 
+    /**
+     *  服务调用超时
+     */
+    private Integer timeout;
+
 }

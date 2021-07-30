@@ -18,6 +18,8 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @Classname NettyNetClientTransport
  * @Description
@@ -53,23 +55,24 @@ public class NettyNetClientTransport implements NetClientTransport {
     }
 
     @Override
-    public MessageProtocol<RpcResponse> sendRequest(MessageProtocol<RpcRequest> protocol, ServiceInfo serviceInfo) throws Exception {
+    public MessageProtocol<RpcResponse> sendRequest(RequestMetadata metadata) throws Exception {
+        MessageProtocol<RpcRequest> protocol = metadata.getProtocol();
         RpcFuture<MessageProtocol<RpcResponse>> future = new RpcFuture<>();
         LocalRpcResponseCache.add(protocol.getHeader().getRequestId(), future);
 
         // TCP 连接
-        ChannelFuture channelFuture = bootstrap.connect(serviceInfo.getAddress(), serviceInfo.getPort()).sync();
+        ChannelFuture channelFuture = bootstrap.connect(metadata.getAddress(), metadata.getPort()).sync();
         channelFuture.addListener((ChannelFutureListener) arg0 -> {
             if (channelFuture.isSuccess()) {
-                log.info("connect rpc server {} on port {} success.", serviceInfo.getAddress(), serviceInfo.getPort());
+                log.info("connect rpc server {} on port {} success.", metadata.getAddress(), metadata.getPort());
             } else {
-                log.error("connect rpc server {} on port {} failed.", serviceInfo.getAddress(), serviceInfo.getPort());
+                log.error("connect rpc server {} on port {} failed.", metadata.getAddress(), metadata.getPort());
                 channelFuture.cause().printStackTrace();
                 eventLoopGroup.shutdownGracefully();
             }
         });
         // 写入数据
         channelFuture.channel().writeAndFlush(protocol);
-        return future.get();
+        return metadata.getTimeout() != null ? future.get(metadata.getTimeout(), TimeUnit.MILLISECONDS) : future.get();
     }
 }

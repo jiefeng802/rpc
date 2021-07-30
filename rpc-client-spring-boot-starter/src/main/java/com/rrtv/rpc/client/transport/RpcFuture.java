@@ -47,7 +47,7 @@ public class RpcFuture<T> implements Future<T> {
      * @throws ExecutionException
      */
     @Override
-    public T get() throws InterruptedException, ExecutionException {
+    public T get() throws InterruptedException {
         // 进入阻塞等待 countDownLatch减少值为0 返回下面结果
         countDownLatch.await();
         return response;
@@ -63,7 +63,7 @@ public class RpcFuture<T> implements Future<T> {
      * @throws TimeoutException
      */
     @Override
-    public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public T get(long timeout, TimeUnit unit) throws InterruptedException {
         if (countDownLatch.await(timeout,unit)){
             return response;
         }

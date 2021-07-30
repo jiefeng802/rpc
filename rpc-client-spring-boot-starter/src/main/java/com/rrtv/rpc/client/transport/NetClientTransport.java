@@ -1,8 +1,6 @@
 package com.rrtv.rpc.client.transport;
 
-import com.rrtv.rpc.core.common.RpcRequest;
 import com.rrtv.rpc.core.common.RpcResponse;
-import com.rrtv.rpc.core.common.ServiceInfo;
 import com.rrtv.rpc.core.protocol.MessageProtocol;
 
 /**
@@ -15,11 +13,10 @@ public interface NetClientTransport {
 
     /**
      *  发送数据
-     * @param protocol
-     * @param serviceInfo
+     * @param metadata
      * @return
      * @throws Exception
      */
-    MessageProtocol<RpcResponse> sendRequest(MessageProtocol<RpcRequest> protocol, ServiceInfo serviceInfo) throws Exception;
+    MessageProtocol<RpcResponse> sendRequest(RequestMetadata metadata) throws Exception;
 
 }

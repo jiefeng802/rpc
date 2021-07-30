@@ -2,6 +2,7 @@ package com.rrtv.rpc.client.proxy;
 
 import com.rrtv.rpc.client.config.RpcClientProperties;
 import com.rrtv.rpc.client.transport.NetClientTransportFactory;
+import com.rrtv.rpc.client.transport.RequestMetadata;
 import com.rrtv.rpc.core.common.*;
 import com.rrtv.rpc.core.discovery.DiscoveryService;
 import com.rrtv.rpc.core.exception.ResourceNotFoundException;
@@ -41,7 +42,7 @@ public class ClientStubInvocationHandler implements InvocationHandler {
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         // 1、获得服务信息
         ServiceInfo serviceInfo = discoveryService.discovery(ServiceUtil.serviceKey(this.calzz.getName(), this.version));
-        if(serviceInfo == null) {
+        if (serviceInfo == null) {
             throw new ResourceNotFoundException("404");
         }
 
@@ -57,9 +58,16 @@ public class ClientStubInvocationHandler implements InvocationHandler {
         messageProtocol.setBody(request);
 
         // 发送网络请求 拿到结果
-        MessageProtocol<RpcResponse> responseMessageProtocol = NetClientTransportFactory.getNetClientTransport().sendRequest(messageProtocol, serviceInfo);
+        MessageProtocol<RpcResponse> responseMessageProtocol = NetClientTransportFactory.getNetClientTransport()
+                .sendRequest(RequestMetadata.builder().protocol(messageProtocol).address(serviceInfo.getAddress())
+                        .port(serviceInfo.getPort()).timeout(properties.getTimeout()).build());
 
-        if(!MsgStatus.isSuccess(responseMessageProtocol.getHeader().getStatus())){
+        if (responseMessageProtocol == null) {
+            log.error("请求超时");
+            throw new RpcException("rpc调用结果失败， 请求超时 timeout:" + properties.getTimeout());
+        }
+
+        if (!MsgStatus.isSuccess(responseMessageProtocol.getHeader().getStatus())) {
             log.error("rpc调用结果失败， message：{}", responseMessageProtocol.getBody().getMessage());
             throw new RpcException(responseMessageProtocol.getBody().getMessage());
         }
