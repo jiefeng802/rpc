@@ -190,6 +190,13 @@ TCP 传输协议是面向流的，没有数据包界限，也就是说消息无�
     }
 ```
 
+序列化性能：
+- 空间上  
+    ![序列化性能_空间上](ziliao/img/serialization_space.png)  
+
+- 时间上  
+    ![序列化性能_时间上](ziliao/img/serialization_time.png)  
+
 6.网络传输，使用netty  
 netty 代码固定的，值得注意的是 handler 的顺序不能弄错，编码是出站操作（可以放在入站后面），解码和收到响应都是入站操作，解码要在前面。
 ```
