@@ -17,6 +17,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
+ *  服务端处理请求 handler
  * @Author: changjiu.wang
  * @Date: 2021/7/25 16:25
  */
@@ -32,6 +33,7 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<MessageProtoc
             MessageProtocol<RpcResponse> resProtocol = new MessageProtocol<>();
             RpcResponse response = new RpcResponse();
             MessageHeader header = rpcRequestMessageProtocol.getHeader();
+            // 设置头部消息类型为响应
             header.setMsgType(MsgType.RESPONSE.getType());
             try {
                 Object result = handle(rpcRequestMessageProtocol.getBody());
@@ -44,6 +46,7 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<MessageProtoc
                 response.setMessage(throwable.toString());
                 log.error("process request {} error", header.getRequestId(), throwable);
             }
+            // 把数据写回去
             channelHandlerContext.writeAndFlush(resProtocol);
         });
 
