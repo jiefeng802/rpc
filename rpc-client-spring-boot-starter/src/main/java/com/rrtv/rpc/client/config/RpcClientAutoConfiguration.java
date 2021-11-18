@@ -14,10 +14,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.context.properties.bind.BindResult;
+import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.env.Environment;
 
 /**
  * @Classname RpcClientAutoConfiguration
@@ -29,9 +32,9 @@ import org.springframework.context.annotation.Primary;
 public class RpcClientAutoConfiguration {
 
     @Bean
-    @ConfigurationProperties(prefix = "rpc.client")
-    public RpcClientProperties ppcClientProperties() {
-        return new RpcClientProperties();
+    public RpcClientProperties rpcClientProperties(Environment environment) {
+        BindResult<RpcClientProperties> result = Binder.get(environment).bind("rpc.client", RpcClientProperties.class);
+        return result.get();
     }
 
     @Bean
