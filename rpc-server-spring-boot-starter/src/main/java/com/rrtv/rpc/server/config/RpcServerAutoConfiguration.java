@@ -32,13 +32,13 @@ public class RpcServerAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(RpcServer.class)
-    RpcServer RpcServer() {
+    public RpcServer RpcServer() {
         return new NettyRpcServer();
     }
 
     @Bean
     @ConditionalOnMissingBean(RpcServerProvider.class)
-    RpcServerProvider rpcServerProvider(@Autowired RegistryService registryService,
+    public RpcServerProvider rpcServerProvider(@Autowired RegistryService registryService,
                                         @Autowired RpcServer rpcServer,
                                         @Autowired RpcServerProperties rpcServerProperties){
         return new RpcServerProvider(registryService, rpcServer, rpcServerProperties);
