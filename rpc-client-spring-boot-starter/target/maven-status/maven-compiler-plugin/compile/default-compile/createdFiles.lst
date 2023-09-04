@@ -1,0 +1,15 @@
+com\rrtv\rpc\client\processor\RpcClientProcessor.class
+com\rrtv\rpc\client\cache\LocalRpcResponseCache.class
+com\rrtv\rpc\client\annotation\RpcAutowired.class
+com\rrtv\rpc\client\transport\RpcFuture.class
+com\rrtv\rpc\client\transport\NetClientTransportFactory.class
+com\rrtv\rpc\client\transport\RequestMetadata$RequestMetadataBuilder.class
+com\rrtv\rpc\client\transport\NettyNetClientTransport.class
+com\rrtv\rpc\client\handler\RpcResponseHandler.class
+com\rrtv\rpc\client\transport\NetClientTransport.class
+com\rrtv\rpc\client\transport\NettyNetClientTransport$1.class
+com\rrtv\rpc\client\proxy\ClientStubProxyFactory.class
+com\rrtv\rpc\client\config\RpcClientAutoConfiguration.class
+com\rrtv\rpc\client\proxy\ClientStubInvocationHandler.class
+com\rrtv\rpc\client\transport\RequestMetadata.class
+com\rrtv\rpc\client\config\RpcClientProperties.class
